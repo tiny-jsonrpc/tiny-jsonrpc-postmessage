@@ -1,2 +1,2 @@
-    return require('index');
+    return require('tiny-jsonrpc-postmessage');
 }));
