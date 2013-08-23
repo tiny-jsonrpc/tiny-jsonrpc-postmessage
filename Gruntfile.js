@@ -15,7 +15,7 @@ module.exports = function(grunt) {
             endFile: 'build/end.frag.js'
           },
           almond: true,
-          include: ['index'],
+          include: ['tiny-jsonrpc-postmessage'],
           baseUrl: 'lib',
           out: 'dist/tiny-jsonrpc-postmessage.js',
 

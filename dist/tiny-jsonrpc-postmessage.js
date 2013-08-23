@@ -1079,7 +1079,7 @@ function (
   return PostMessageServer;
 });
 
-define('index',[
+define('tiny-jsonrpc-postmessage',[
   './tiny-jsonrpc-postmessage/client',
   './tiny-jsonrpc-postmessage/server'
 ],

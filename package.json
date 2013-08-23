@@ -1,6 +1,6 @@
 {
   "name": "tiny-jsonrpc-postmessage",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "JSON-RPC 2.0 client and server that communicate via postMessage",
   "main": "index.js",
   "dependencies": {
