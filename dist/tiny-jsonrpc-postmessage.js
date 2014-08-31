@@ -433,7 +433,7 @@ define("almond", function(){});
         module.exports = factory();
     } else if (typeof define === 'function' && define.amd) {
         // AMD. Register as an anonymous module.
-        define('tiny-jsonrpc/util',factory);
+        define('tiny-jsonrpc/lib/tiny-jsonrpc/util',factory);
     } else {
         // Browser globals
         root.tinyJsonRpc = root.tinyJsonRpc || {};
@@ -533,7 +533,7 @@ define("almond", function(){});
         module.exports = factory(require(requireBase + '/util'));
     } else if (typeof define === 'function' && define.amd) {
         // AMD. Register as an anonymous module.
-        define('tiny-jsonrpc/client',['./util'], factory);
+        define('tiny-jsonrpc/lib/tiny-jsonrpc/client',['./util'], factory);
     } else {
         // Browser globals
         root.tinyJsonRpc = root.tinyJsonRpc || {};
@@ -663,80 +663,75 @@ define("almond", function(){});
     return Client;
 }));
 
-define('tiny-jsonrpc-postmessage/client',[
-  'tiny-jsonrpc/client',
-  'tiny-jsonrpc/util'
-],
-function (
-  Client,
-  util
-) {
-    var global = this;
+define('tiny-jsonrpc-postmessage/client',['require','exports','module','tiny-jsonrpc/lib/tiny-jsonrpc/client','tiny-jsonrpc/lib/tiny-jsonrpc/util'],function (require, exports, module) {var Client = require('tiny-jsonrpc/lib/tiny-jsonrpc/client');
+var util = require('tiny-jsonrpc/lib/tiny-jsonrpc/util');
+var global = this;
 
-    function PostMessageClient(options) {
-        options.server = options.server || global;
-        Client.apply(this, arguments);
+function PostMessageClient(options) {
+  options.server = options.server || global;
+  Client.apply(this, arguments);
 
-        this._callbacks = {};
-        this._server.addEventListener('message', this._onMessage.bind(this));
-    }
+  this._callbacks = {};
+  this._server.addEventListener('message', this._onMessage.bind(this));
+}
 
-    PostMessageClient.prototype = new Client({
-        server: true
-    });
-    PostMessageClient.prototype.constructor = PostMessageClient;
+PostMessageClient.prototype = new Client({
+  server: true
+});
+PostMessageClient.prototype.constructor = PostMessageClient;
 
-    PostMessageClient.prototype._send = function (request) {
-        var success;
+PostMessageClient.prototype._send = function (request) {
+  var success;
 
-        try {
-            JSON.stringify(request);
-        } catch (e) {
-            throw 'Could not serialize request to JSON';
-        }
+  try {
+    JSON.stringify(request);
+  } catch (e) {
+    throw 'Could not serialize request to JSON';
+  }
 
-        this._server.postMessage(request);
-    };
+  this._server.postMessage(request);
+};
 
-    PostMessageClient.prototype.request = function () {
-        var request = this._makeRequest.apply(this, arguments);
-        var callback;
-        var response;
+PostMessageClient.prototype.request = function () {
+  var request = this._makeRequest.apply(this, arguments);
+  var callback;
+  var response;
 
-        request.id = this._nextId++;
+  request.id = this._nextId++;
 
-        if (request.callback) {
-            callback = request.callback;
-            delete request.callback;
-        } else if (util.isArray(request.params) &&
-            util.isFunction(request.params[request.params.length - 1])
-        ) {
-            callback = request.params.pop();
-        }
+  if (request.callback) {
+    callback = request.callback;
+    delete request.callback;
+  } else if (util.isArray(request.params) &&
+    util.isFunction(request.params[request.params.length - 1])
+  ) {
+    callback = request.params.pop();
+  }
 
-        this._send(request);
+  this._send(request);
 
-        if (callback && util.isNumber(request.id)) {
-            this._callbacks[request.id] = callback;
-        }
-    };
+  if (callback && util.isNumber(request.id)) {
+    this._callbacks[request.id] = callback;
+  }
+};
 
-    PostMessageClient.prototype._onMessage = function (e) {
-        if (!e.data || (!e.data.result && !e.data.error)) {
-            // ignore obviously invalid messages: they're not for us
-            return;
-        }
+PostMessageClient.prototype._onMessage = function (e) {
+  if (!e.data || (!e.data.result && !e.data.error)) {
+    // ignore obviously invalid messages: they're not for us
+    return;
+  }
 
-        var response = e.data;
+  var response = e.data;
 
-        if (!util.isUndefined(response.id) && this._callbacks[response.id]) {
-            this._callbacks[response.id](response.error || null,
-                response.result || null);
-            delete this._callbacks[response.id];
-        }
-    };
+  if (!util.isUndefined(response.id) && this._callbacks[response.id]) {
+    this._callbacks[response.id](response.error || null,
+      response.result || null);
+    delete this._callbacks[response.id];
+  }
+};
 
-    return PostMessageClient;
+module.exports = PostMessageClient;
+
 });
 
 ;(function (root, factory) {
@@ -755,7 +750,7 @@ function (
         module.exports = factory(require(requireBase + '/util'));
     } else if (typeof define === 'function' && define.amd) {
         // AMD. Register as an anonymous module.
-        define('tiny-jsonrpc/server',['./util'], factory);
+        define('tiny-jsonrpc/lib/tiny-jsonrpc/server',['./util'], factory);
     } else {
         // Browser globals
         root.tinyJsonRpc = root.tinyJsonRpc || {};
@@ -1044,53 +1039,41 @@ function (
     return Server;
 }));
 
-define('tiny-jsonrpc-postmessage/server',[
-  'tiny-jsonrpc/server',
-  'tiny-jsonrpc/util'
-],
-function (
-  Server,
-  util
-) {
-  var global = this;
+define('tiny-jsonrpc-postmessage/server',['require','exports','module','tiny-jsonrpc/lib/tiny-jsonrpc/server','tiny-jsonrpc/lib/tiny-jsonrpc/util'],function (require, exports, module) {var Server = require('tiny-jsonrpc/lib/tiny-jsonrpc/server');
+var util = require('tiny-jsonrpc/lib/tiny-jsonrpc/util');
+var global = this;
 
-  function PostMessageServer(options) {
-    Server.apply(this, arguments);
-    this._client = options.client || global;
-    this._client.addEventListener('message', this._onMessage.bind(this));
+function PostMessageServer(options) {
+  Server.apply(this, arguments);
+  this._client = options.client || global;
+  this._client.addEventListener('message', this._onMessage.bind(this));
+}
+
+PostMessageServer.prototype = new Server();
+PostMessageServer.prototype.constructor = PostMessageServer;
+
+PostMessageServer.prototype._onMessage = function (e) {
+  if (!e.data || !e.data.method) {
+    // ignore obviously invalid messages: they're not for us
+    return;
   }
 
-  PostMessageServer.prototype = new Server();
-  PostMessageServer.prototype.constructor = PostMessageServer;
+  var result = this.respond(JSON.stringify(e.data));
 
-  PostMessageServer.prototype._onMessage = function (e) {
-    if (!e.data || !e.data.method) {
-      // ignore obviously invalid messages: they're not for us
-      return;
-    }
+  if (typeof result === 'string') {
+    this._client.postMessage(JSON.parse(result));
+  }
+};
 
-    var result = this.respond(JSON.stringify(e.data));
+module.exports = PostMessageServer;
 
-    if (typeof result === 'string') {
-      this._client.postMessage(JSON.parse(result));
-    }
-  };
-
-  return PostMessageServer;
 });
 
-define('tiny-jsonrpc-postmessage',[
-  './tiny-jsonrpc-postmessage/client',
-  './tiny-jsonrpc-postmessage/server'
-],
-function (
-  Client,
-  Server
-) {
-  return {
-    Client: Client,
-    Server: Server
-  };
+define('tiny-jsonrpc-postmessage',['require','exports','module','./tiny-jsonrpc-postmessage/client','./tiny-jsonrpc-postmessage/server'],function (require, exports, module) {module.exports = {
+  Client: require('./tiny-jsonrpc-postmessage/client'),
+  Server: require('./tiny-jsonrpc-postmessage/server')
+};
+
 });
-    return require('index');
+    return require('tiny-jsonrpc-postmessage');
 }));

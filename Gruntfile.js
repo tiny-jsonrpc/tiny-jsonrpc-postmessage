@@ -23,6 +23,8 @@ module.exports = function(grunt) {
             'tiny-jsonrpc': '../node_modules/tiny-jsonrpc/lib/tiny-jsonrpc'
           },
 
+          cjsTranslate: true,
+
           //generateSourceMaps: true,
           //preserveLicenseComments: false
           optimize: 'none'
