@@ -4,18 +4,17 @@
   "description": "JSON-RPC 2.0 client and server that communicate via postMessage",
   "main": "index.js",
   "dependencies": {
-    "tiny-jsonrpc": "~0.2.1"
+    "tiny-jsonrpc": "~1.0.0"
   },
   "devDependencies": {
-    "grunt": "~0.4.1",
-    "grunt-requirejs": "~0.3.5"
+    "grunt": "~0.4.1"
   },
   "scripts": {
     "test": "grunt test"
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/TreehouseJS/tiny-jsonrpc-postmessage.git"
+    "url": "git://github.com/tiny-jsonrpc/tiny-jsonrpc-postmessage.git"
   },
   "keywords": [
     "jsonrpc",
@@ -25,11 +24,9 @@
     "worker",
     "webworker"
   ],
-  "author": "Lon Ingram",
+  "author": "Lon Ingram <lawnsea@gmail.com>",
   "license": "MIT",
-  "gitHead": "4da10526517a9e0f37c03fa42c7ebe0a9c406fc2",
-  "readmeFilename": "README.md",
   "bugs": {
-    "url": "https://github.com/TreehouseJS/tiny-jsonrpc-postmessage/issues"
+    "url": "https://github.com/tiny-jsonrpc/tiny-jsonrpc-postmessage/issues"
   }
 }
