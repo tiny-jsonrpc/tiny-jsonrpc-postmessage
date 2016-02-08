@@ -18,6 +18,14 @@ test('PostMessageServer instances', function (t) {
           new PostMessageServer();
         }, 'is optional');
 
+        t.test('config.allowedOrigins', function (t) {
+          t.doesNotThrow(function () {
+            new PostMessageServer({});
+          }, 'is optional');
+
+          t.end();
+        });
+
         t.test('config.client', function (t) {
           t.doesNotThrow(function () {
             new PostMessageServer({});
@@ -278,6 +286,52 @@ test('PostMessageServer instances', function (t) {
         client.postMessage.firstCall.args.length,
         1,
         'specifies no target origin if event has no origin'
+      );
+
+      t.end();
+    });
+
+    t.test('if `config.allowedOrigins` specified', function (t) {
+      var client = {
+        addEventListener: function (event, handler) {
+          messageHandler = handler;
+        }
+      };
+      var messageHandler;
+
+      var server = new PostMessageServer({
+        client: client,
+        allowedOrigins: [
+          'https://example.com',
+          'http://zombo.com:8080'
+        ]
+      });
+
+      sinon.stub(server, 'respond');
+      var data = {
+        jsonrpc: '2.0',
+        method: 'foo',
+        params: []
+      };
+
+      messageHandler({
+        data: data
+      });
+      t.ok(!server.respond.called, 'ignores events without an origin');
+
+      messageHandler({
+        data: data,
+        origin: 'https://foo.example.com'
+      });
+      t.ok(!server.respond.called, 'ignores events not from an allowed origin');
+
+      messageHandler({
+        data: data,
+        origin: 'https://example.com'
+      });
+      t.ok(
+        server.respond.calledOnce,
+        'responds to events from an allowed origin'
       );
 
       t.end();
