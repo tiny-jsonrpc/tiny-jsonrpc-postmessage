@@ -208,8 +208,80 @@ test('PostMessageServer instances', function (t) {
         );
 
         t.end();
-
       });
+
+    t.test('reflects event origin if specified', function (t) {
+      var client = {
+        addEventListener: function (event, handler) {
+          messageHandler = handler;
+        },
+        postMessage: sinon.stub()
+      };
+      var messageHandler;
+
+      var server = new PostMessageServer({
+        client: client
+      });
+
+      server.provide(function echo(data) {
+        return data;
+      });
+
+      var data = {
+        jsonrpc: '2.0',
+        method: 'echo',
+        params: ['marco'],
+        id: 1
+      };
+      messageHandler({
+        data: data,
+        origin: 'http://example.com:1234'
+      });
+
+      t.equal(
+        client.postMessage.firstCall.args[1],
+        'http://example.com:1234',
+        'reflects the event\'s origin as target origin if specified'
+      );
+
+      t.end();
+    });
+
+    t.test('specifies no target origin if event has no origin', function (t) {
+      var client = {
+        addEventListener: function (event, handler) {
+          messageHandler = handler;
+        },
+        postMessage: sinon.stub()
+      };
+      var messageHandler;
+
+      var server = new PostMessageServer({
+        client: client
+      });
+
+      server.provide(function echo(data) {
+        return data;
+      });
+
+      var data = {
+        jsonrpc: '2.0',
+        method: 'echo',
+        params: ['marco'],
+        id: 1
+      };
+      messageHandler({
+        data: data
+      });
+
+      t.equal(
+        client.postMessage.firstCall.args.length,
+        1,
+        'specifies no target origin if event has no origin'
+      );
+
+      t.end();
+    });
 
     t.end();
   });
