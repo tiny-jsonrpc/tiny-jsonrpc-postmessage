@@ -40,30 +40,66 @@ test('PostMessageServer instances', function (t) {
       t.end();
     });
 
-    t.test('listens to its client\'s `message` event', function (t) {
-      var client = {
-        addEventListener: sinon.spy()
-      };
+    t.test(
+      'if client is a worker, listens to its `message` event',
+      function (t) {
+        var client = new Worker('');
+        sinon.stub(client, 'addEventListener');
 
-      new PostMessageServer({
-        client: client
+        new PostMessageServer({
+          client: client
+        });
+
+        t.ok(
+          client.addEventListener.calledOnce, 'client.addEventListener called');
+        t.equal(
+          client.addEventListener.firstCall.args[0],
+          'message',
+          '`message` event hooked'
+        );
+        t.equal(
+          typeof client.addEventListener.firstCall.args[1],
+          'function',
+          '`message` event handler registered'
+        );
+
+        t.end();
       });
 
-      t.ok(
-        client.addEventListener.calledOnce, 'client.addEventListener called');
-      t.equal(
-        client.addEventListener.firstCall.args[0],
-        'message',
-        '`message` event hooked'
-      );
-      t.equal(
-        typeof client.addEventListener.firstCall.args[1],
-        'function',
-        '`message` event handler registered'
-      );
+    t.test(
+      'if client is not a worker, listens to global object\'s `message` event',
+      function (t) {
+        var client = {
+          addEventListener: sinon.spy()
+        };
+        sinon.stub(global, 'addEventListener');
 
-      t.end();
-    });
+        new PostMessageServer({
+          client: client
+        });
+
+        t.ok(
+          !client.addEventListener.called,
+          'client.addEventListener not called'
+        );
+        t.ok(
+          global.addEventListener.calledOnce,
+          'global.addEventListener called'
+        );
+        t.equal(
+          global.addEventListener.firstCall.args[0],
+          'message',
+          '`message` event hooked'
+        );
+        t.equal(
+          typeof global.addEventListener.firstCall.args[1],
+          'function',
+          '`message` event handler registered'
+        );
+
+        global.addEventListener.restore();
+        t.end();
+      });
 
     t.end();
   });
@@ -109,12 +145,12 @@ test('PostMessageServer instances', function (t) {
 
   t.test('on a client `message` event', function (t) {
     t.test('ignores malformed events', function (t) {
-      var client = {
-        addEventListener: function (event, handler) {
-          messageHandler = handler;
-        }
-      };
+      var client = {};
       var messageHandler;
+
+      sinon.stub(global, 'addEventListener', function (event, handler) {
+        messageHandler = handler;
+      });
 
       var server = new PostMessageServer({
         client: client
@@ -138,18 +174,19 @@ test('PostMessageServer instances', function (t) {
         'does not call `this.respond` if no method'
       );
 
+      global.addEventListener.restore();
       t.end();
     });
 
     t.test(
       'serializes the `data` property of the event and passes it to `respond`',
       function (t) {
-        var client = {
-          addEventListener: function (event, handler) {
-            messageHandler = handler;
-          }
-        };
+        var client = {};
         var messageHandler;
+
+        sinon.stub(global, 'addEventListener', function (event, handler) {
+          messageHandler = handler;
+        });
 
         var server = new PostMessageServer({
           client: client
@@ -172,6 +209,7 @@ test('PostMessageServer instances', function (t) {
           'passes the stringified `data` property of the event'
         );
 
+        global.addEventListener.restore();
         t.end();
       });
 
@@ -179,12 +217,13 @@ test('PostMessageServer instances', function (t) {
       'if `respond` returns a string, postMessages a response to the client',
       function (t) {
         var client = {
-          addEventListener: function (event, handler) {
-            messageHandler = handler;
-          },
           postMessage: sinon.stub()
         };
         var messageHandler;
+
+        sinon.stub(global, 'addEventListener', function (event, handler) {
+          messageHandler = handler;
+        });
 
         var server = new PostMessageServer({
           client: client
@@ -215,17 +254,19 @@ test('PostMessageServer instances', function (t) {
           'passes the parsed return value'
         );
 
+        global.addEventListener.restore();
         t.end();
       });
 
     t.test('reflects event origin if specified', function (t) {
       var client = {
-        addEventListener: function (event, handler) {
-          messageHandler = handler;
-        },
         postMessage: sinon.stub()
       };
       var messageHandler;
+
+      sinon.stub(global, 'addEventListener', function (event, handler) {
+        messageHandler = handler;
+      });
 
       var server = new PostMessageServer({
         client: client
@@ -252,17 +293,19 @@ test('PostMessageServer instances', function (t) {
         'reflects the event\'s origin as target origin if specified'
       );
 
+      global.addEventListener.restore();
       t.end();
     });
 
     t.test('specifies no target origin if event has no origin', function (t) {
       var client = {
-        addEventListener: function (event, handler) {
-          messageHandler = handler;
-        },
         postMessage: sinon.stub()
       };
       var messageHandler;
+
+      sinon.stub(global, 'addEventListener', function (event, handler) {
+        messageHandler = handler;
+      });
 
       var server = new PostMessageServer({
         client: client
@@ -288,16 +331,17 @@ test('PostMessageServer instances', function (t) {
         'specifies no target origin if event has no origin'
       );
 
+      global.addEventListener.restore();
       t.end();
     });
 
     t.test('if `config.allowedOrigins` specified', function (t) {
-      var client = {
-        addEventListener: function (event, handler) {
-          messageHandler = handler;
-        }
-      };
+      var client = {};
       var messageHandler;
+
+      sinon.stub(global, 'addEventListener', function (event, handler) {
+        messageHandler = handler;
+      });
 
       var server = new PostMessageServer({
         client: client,
@@ -334,6 +378,7 @@ test('PostMessageServer instances', function (t) {
         'responds to events from an allowed origin'
       );
 
+      global.addEventListener.restore();
       t.end();
     });
 

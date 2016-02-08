@@ -3,6 +3,7 @@
 var sinon = require('sinon');
 var test = require('tape');
 
+var global = require('bv-ui-core/lib/global');
 var tinyJsonRpc = require('tiny-jsonrpc');
 var Client = tinyJsonRpc.Client;
 var tinyJsonRpcPostMessage = require('../');
@@ -48,30 +49,66 @@ test('PostMessageClient instances', function (t) {
       t.end();
     });
 
-    t.test('listens to its server\'s `message` event', function (t) {
-      var server = {
-        addEventListener: sinon.spy()
-      };
+    t.test(
+      'if server is a worker, listens to its `message` event',
+      function (t) {
+        var server = new Worker('');
+        sinon.stub(server, 'addEventListener');
 
-      new PostMessageClient({
-        server: server
+        new PostMessageClient({
+          server: server
+        });
+
+        t.ok(
+          server.addEventListener.calledOnce, 'server.addEventListener called');
+        t.equal(
+          server.addEventListener.firstCall.args[0],
+          'message',
+          '`message` event hooked'
+        );
+        t.equal(
+          typeof server.addEventListener.firstCall.args[1],
+          'function',
+          '`message` event handler registered'
+        );
+
+        t.end();
       });
 
-      t.ok(
-        server.addEventListener.calledOnce, 'server.addEventListener called');
-      t.equal(
-        server.addEventListener.firstCall.args[0],
-        'message',
-        '`message` event hooked'
-      );
-      t.equal(
-        typeof server.addEventListener.firstCall.args[1],
-        'function',
-        '`message` event handler registered'
-      );
+    t.test(
+      'if server is not a worker, listens to global object\'s `message` event',
+      function (t) {
+        var server = {
+          addEventListener: sinon.spy()
+        };
+        sinon.stub(global, 'addEventListener');
 
-      t.end();
-    });
+        new PostMessageClient({
+          server: server
+        });
+
+        t.ok(
+          !server.addEventListener.called,
+          'server.addEventListener not called'
+        );
+        t.ok(
+          global.addEventListener.calledOnce,
+          'global.addEventListener called'
+        );
+        t.equal(
+          global.addEventListener.firstCall.args[0],
+          'message',
+          '`message` event hooked'
+        );
+        t.equal(
+          typeof global.addEventListener.firstCall.args[1],
+          'function',
+          '`message` event handler registered'
+        );
+
+        global.addEventListener.restore();
+        t.end();
+      });
 
     t.end();
   });
@@ -132,15 +169,16 @@ test('PostMessageClient instances', function (t) {
     t.test('if serverOrigin set, ignore responses not from that origin',
       function (t) {
         var server = {
-          addEventListener: function (event, handler) {
-            messageHandler = handler;
-          },
           postMessage: function (data) {
             id = data.id;
           }
         };
         var callback = sinon.spy();
         var messageHandler, id
+
+        sinon.stub(global, 'addEventListener', function (event, handler) {
+          messageHandler = handler;
+        });
 
         var client = new PostMessageClient({
           server: server,
@@ -184,6 +222,7 @@ test('PostMessageClient instances', function (t) {
 
         t.ok(callback.calledOnce, 'callback invoked if origin is serverOrigin');
 
+        global.addEventListener.restore();
         t.end();
       });
 
