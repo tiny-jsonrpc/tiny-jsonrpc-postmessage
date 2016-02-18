@@ -25,7 +25,7 @@
   "license": "MIT",
   "dependencies": {
     "bv-ui-core": "^0.8.0",
-    "tiny-jsonrpc": "~1.0.0"
+    "tiny-jsonrpc": "^2.0.0"
   },
   "devDependencies": {
     "expose-loader": "^0.7.1",

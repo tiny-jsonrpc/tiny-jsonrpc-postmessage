@@ -4,8 +4,7 @@ var sinon = require('sinon');
 var test = require('tape');
 
 var global = require('bv-ui-core/lib/global');
-var tinyJsonRpc = require('tiny-jsonrpc');
-var Client = tinyJsonRpc.Client;
+var Client = require('tiny-jsonrpc').Client;
 var tinyJsonRpcPostMessage = require('../');
 var PostMessageClient = tinyJsonRpcPostMessage.Client;
 

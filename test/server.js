@@ -3,8 +3,7 @@
 var sinon = require('sinon');
 var test = require('tape');
 
-var tinyJsonRpc = require('tiny-jsonrpc');
-var Server = tinyJsonRpc.Server;
+var Server = require('tiny-jsonrpc').Server;
 var tinyJsonRpcPostMessage = require('../');
 var PostMessageServer = tinyJsonRpcPostMessage.Server;
 
