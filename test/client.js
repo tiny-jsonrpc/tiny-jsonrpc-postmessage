@@ -169,11 +169,11 @@ test('PostMessageClient instances', function (t) {
       function (t) {
         var server = {
           postMessage: function (data) {
-            id = data.id;
+            id = JSON.parse(data).id;
           }
         };
         var callback = sinon.spy();
-        var messageHandler, id
+        var messageHandler, id, data;
 
         sinon.stub(global, 'addEventListener', function (event, handler) {
           messageHandler = handler;
@@ -186,23 +186,27 @@ test('PostMessageClient instances', function (t) {
 
         client.request('foo', callback);
 
+        data = {
+          jsonrpc: '2.0',
+          result: 'foo',
+          id: id
+        };
+
         messageHandler({
-          data: {
-            jsonrpc: '2.0',
-            result: 'foo',
-            id: id
-          }
+          data: JSON.stringify(data)
         });
 
         t.ok(!callback.called, 'callback not invoked if no origin');
 
+        data = {
+          jsonrpc: '2.0',
+          result: 'foo',
+          id: id
+        };
+
         messageHandler({
           origin: 'https://evil.com',
-          data: {
-            jsonrpc: '2.0',
-            result: 'foo',
-            id: id
-          }
+          data: JSON.stringify(data)
         });
 
         t.ok(
@@ -210,13 +214,15 @@ test('PostMessageClient instances', function (t) {
           'callback not invoked if origin is not serverOrigin'
         );
 
+        data = {
+          jsonrpc: '2.0',
+          result: 'foo',
+          id: id
+        };
+
         messageHandler({
           origin: 'https://example.com',
-          data: {
-            jsonrpc: '2.0',
-            result: 'foo',
-            id: id
-          }
+          data: JSON.stringify(data)
         });
 
         t.ok(callback.calledOnce, 'callback invoked if origin is serverOrigin');
