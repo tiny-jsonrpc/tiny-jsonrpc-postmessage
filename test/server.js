@@ -170,6 +170,16 @@ test('PostMessageServer instances', function (t) {
       });
       t.notOk(
         server.respond.called,
+        'does not call `this.respond` if data is an object'
+      );
+
+      messageHandler({
+        data: JSON.stringify({
+          foo: 'bar'
+        })
+      });
+      t.notOk(
+        server.respond.called,
         'does not call `this.respond` if no method'
       );
 
@@ -198,7 +208,7 @@ test('PostMessageServer instances', function (t) {
           params: []
         };
         messageHandler({
-          data: data
+          data: JSON.stringify(data)
         });
 
         t.ok(server.respond.calledOnce, 'calls `this.respond`');
@@ -239,12 +249,12 @@ test('PostMessageServer instances', function (t) {
           id: 1
         };
         messageHandler({
-          data: data
+          data: JSON.stringify(data)
         });
 
         t.ok(client.postMessage.calledOnce, 'postMessages client');
         t.deepEqual(
-          client.postMessage.firstCall.args[0],
+          JSON.parse(client.postMessage.firstCall.args[0]),
           {
             jsonrpc: '2.0',
             result: 'marco',
@@ -282,7 +292,7 @@ test('PostMessageServer instances', function (t) {
         id: 1
       };
       messageHandler({
-        data: data,
+        data: JSON.stringify(data),
         origin: 'http://example.com:1234'
       });
 
@@ -321,7 +331,7 @@ test('PostMessageServer instances', function (t) {
         id: 1
       };
       messageHandler({
-        data: data
+        data: JSON.stringify(data)
       });
 
       t.equal(
@@ -358,18 +368,18 @@ test('PostMessageServer instances', function (t) {
       };
 
       messageHandler({
-        data: data
+        data: JSON.stringify(data)
       });
       t.ok(!server.respond.called, 'ignores events without an origin');
 
       messageHandler({
-        data: data,
+        data: JSON.stringify(data),
         origin: 'https://foo.example.com'
       });
       t.ok(!server.respond.called, 'ignores events not from an allowed origin');
 
       messageHandler({
-        data: data,
+        data: JSON.stringify(data),
         origin: 'https://example.com'
       });
       t.ok(
