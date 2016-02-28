@@ -143,6 +143,56 @@ test('PostMessageServer instances', function (t) {
   });
 
   t.test('on a client `message` event', function (t) {
+    t.test('handle events only from specified client', function (t) {
+      var client = {
+        client: 'client'
+      };
+      var otherClient = {
+        client: 'otherClient'
+      };
+      var messageHandler;
+
+      sinon.stub(global, 'addEventListener', function (event, handler) {
+        messageHandler = handler;
+      });
+
+      var server = new PostMessageServer({
+        client: client,
+        allowedOrigins: [
+          'https://example.com'
+        ]
+      });
+
+      sinon.stub(server, 'respond');
+
+      var data = {
+        method: 'method'
+      };
+
+      messageHandler({
+        source: otherClient,
+        origin: 'https://example.com',
+        data: JSON.stringify(data)
+      });
+      t.notOk(
+        server.respond.called,
+        'does not call `this.respond` if event is from another client'
+      );
+
+      messageHandler({
+        source: client,
+        origin: 'https://example.com',
+        data: JSON.stringify(data)
+      });
+      t.ok(
+        server.respond.called,
+        'calls `this.respond` if event is from specified client'
+      );
+
+      global.addEventListener.restore();
+      t.end();
+    });
+
     t.test('ignores malformed events', function (t) {
       var client = {};
       var messageHandler;
@@ -157,13 +207,16 @@ test('PostMessageServer instances', function (t) {
 
       sinon.stub(server, 'respond');
 
-      messageHandler({});
+      messageHandler({
+        source: client
+      });
       t.notOk(
         server.respond.called,
         'does not call `this.respond` if no data'
       );
 
       messageHandler({
+        source: client,
         data: {
           foo: 'bar'
         }
@@ -174,6 +227,7 @@ test('PostMessageServer instances', function (t) {
       );
 
       messageHandler({
+        source: client,
         data: JSON.stringify({
           foo: 'bar'
         })
@@ -208,6 +262,7 @@ test('PostMessageServer instances', function (t) {
           params: []
         };
         messageHandler({
+          source: client,
           data: JSON.stringify(data)
         });
 
@@ -249,6 +304,7 @@ test('PostMessageServer instances', function (t) {
           id: 1
         };
         messageHandler({
+          source: client,
           data: JSON.stringify(data)
         });
 
@@ -292,6 +348,7 @@ test('PostMessageServer instances', function (t) {
         id: 1
       };
       messageHandler({
+        source: client,
         data: JSON.stringify(data),
         origin: 'http://example.com:1234'
       });
@@ -331,6 +388,7 @@ test('PostMessageServer instances', function (t) {
         id: 1
       };
       messageHandler({
+        source: client,
         data: JSON.stringify(data)
       });
 
@@ -368,17 +426,20 @@ test('PostMessageServer instances', function (t) {
       };
 
       messageHandler({
+        source: client,
         data: JSON.stringify(data)
       });
       t.ok(!server.respond.called, 'ignores events without an origin');
 
       messageHandler({
+        source: client,
         data: JSON.stringify(data),
         origin: 'https://foo.example.com'
       });
       t.ok(!server.respond.called, 'ignores events not from an allowed origin');
 
       messageHandler({
+        source: client,
         data: JSON.stringify(data),
         origin: 'https://example.com'
       });
