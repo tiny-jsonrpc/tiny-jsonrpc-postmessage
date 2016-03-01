@@ -223,7 +223,15 @@ test('PostMessageServer instances', function (t) {
       });
       t.notOk(
         server.respond.called,
-        'does not call `this.respond` if data is an object'
+        'does not call `this.respond` if data is not JSON'
+      );
+
+      messageHandler({
+        data: JSON.stringify(123)
+      });
+      t.notOk(
+        server.respond.called,
+        'does not call `this.respond` if data does not parse to an object'
       );
 
       messageHandler({
@@ -277,51 +285,88 @@ test('PostMessageServer instances', function (t) {
         t.end();
       });
 
-    t.test(
-      'if `respond` returns a string, postMessages a response to the client',
-      function (t) {
-        var client = {
-          postMessage: sinon.stub()
-        };
-        var messageHandler;
+    t.test('if `respond` returns a string', function (t) {
+      t.test('for a request, postMessages a response to the client',
+        function (t) {
+          var client = {
+            postMessage: sinon.stub()
+          };
+          var messageHandler;
 
-        sinon.stub(global, 'addEventListener', function (event, handler) {
-          messageHandler = handler;
-        });
+          sinon.stub(global, 'addEventListener', function (event, handler) {
+            messageHandler = handler;
+          });
 
-        var server = new PostMessageServer({
-          client: client
-        });
+          var server = new PostMessageServer({
+            client: client
+          });
 
-        server.provide(function echo(data) {
-          return data;
-        });
+          server.provide(function echo(data) {
+            return data;
+          });
 
-        var data = {
-          jsonrpc: '2.0',
-          method: 'echo',
-          params: ['marco'],
-          id: 1
-        };
-        messageHandler({
-          source: client,
-          data: JSON.stringify(data)
-        });
-
-        t.ok(client.postMessage.calledOnce, 'postMessages client');
-        t.deepEqual(
-          JSON.parse(client.postMessage.firstCall.args[0]),
-          {
+          var data = {
             jsonrpc: '2.0',
-            result: 'marco',
+            method: 'echo',
+            params: ['marco'],
             id: 1
-          },
-          'passes the parsed return value'
-        );
+          };
+          messageHandler({
+            source: client,
+            data: JSON.stringify(data)
+          });
 
-        global.addEventListener.restore();
-        t.end();
+          t.ok(client.postMessage.calledOnce, 'postMessages client');
+          t.deepEqual(
+            JSON.parse(client.postMessage.firstCall.args[0]),
+            {
+              jsonrpc: '2.0',
+              result: 'marco',
+              id: 1
+            },
+            'passes the parsed return value'
+          );
+
+          global.addEventListener.restore();
+          t.end();
+        });
+
+      t.test('for a notification, does not postMessage the client',
+        function (t) {
+          var client = {
+            postMessage: sinon.stub()
+          };
+          var messageHandler;
+
+          sinon.stub(global, 'addEventListener', function (event, handler) {
+            messageHandler = handler;
+          });
+
+          var server = new PostMessageServer({
+            client: client
+          });
+
+          server.provide(function echo(data) {
+            return data;
+          });
+
+          var data = {
+            jsonrpc: '2.0',
+            method: 'echo',
+            params: ['marco']
+          };
+          messageHandler({
+            data: JSON.stringify(data)
+          });
+
+          t.notOk(client.postMessage.called, 'does not postMessage client');
+
+          global.addEventListener.restore();
+          t.end();
       });
+
+      t.end();
+    });
 
     t.test('reflects event origin if specified', function (t) {
       var client = {
