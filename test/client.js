@@ -109,6 +109,58 @@ test('PostMessageClient instances', function (t) {
         t.end();
       });
 
+      t.test('listener', function (t) {
+        var server = {
+          postMessage: function (data) {
+            id = JSON.parse(data).id;
+          }
+        };
+        var callback = sinon.spy();
+        var messageHandler, id, data;
+
+        sinon.stub(global, 'addEventListener', function (event, handler) {
+          messageHandler = handler;
+        });
+
+        var client = new PostMessageClient({
+          server: server,
+          serverOrigin: 'https://example.com'
+        });
+
+        t.test('ignores messages where `e.data` cannot be parsed as JSON',
+          function (t) {
+            t.doesNotThrow(function () {
+              messageHandler({
+                data: 123
+              });
+            });
+            t.end();
+          });
+
+        t.test('ignores messages where `e.data` does not parse to an object',
+          function (t) {
+            t.doesNotThrow(function () {
+              messageHandler({
+                data: 'null'
+              });
+            });
+            t.end();
+          });
+
+        t.test('ignores messages where `e.data` is not an object',
+          function (t) {
+            t.doesNotThrow(function () {
+              messageHandler({
+                data: JSON.stringify({})
+              });
+            });
+            t.end();
+          });
+
+        global.addEventListener.restore();
+        t.end();
+      });
+
     t.end();
   });
 
