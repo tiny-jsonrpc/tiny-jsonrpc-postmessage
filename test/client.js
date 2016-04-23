@@ -131,7 +131,7 @@ test('PostMessageClient instances', function (t) {
           function (t) {
             t.doesNotThrow(function () {
               messageHandler({
-                data: 123
+                data: ','
               });
             });
             t.end();
