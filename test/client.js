@@ -283,6 +283,67 @@ test('PostMessageClient instances', function (t) {
         t.end();
       });
 
+    t.test('callback invoked when the result is falsy', function (t) {
+      var server = {
+        postMessage: function (data) {
+          id = JSON.parse(data).id;
+        }
+      };
+      var callback = sinon.spy();
+      var messageHandler, id, data;
+
+      sinon.stub(global, 'addEventListener', function (event, handler) {
+        messageHandler = handler;
+      });
+
+      var client = new PostMessageClient({
+        server: server,
+        serverOrigin: 'https://example.com'
+      });
+
+      client.request('foo', callback);
+
+      data = {
+        jsonrpc: '2.0',
+        result: false,
+        id: id
+      };
+
+      messageHandler({
+        origin: 'https://example.com',
+        data: JSON.stringify(data)
+      });
+
+      t.ok(callback.called, 'callback invoked when result false');
+      t.ok(
+        callback.calledWithExactly(null, data.result),
+        'callback invoked with correct value when result false'
+      );
+
+      callback.reset();
+      client.request('foo', callback);
+
+      data = {
+        jsonrpc: '2.0',
+        result: 0,
+        id: id
+      };
+
+      messageHandler({
+        origin: 'https://example.com',
+        data: JSON.stringify(data)
+      });
+
+      t.ok(callback.called, 'callback invoked when result falsy');
+      t.ok(
+        callback.calledWithExactly(null, data.result),
+        'callback invoked with correct value when result falsy'
+      );
+
+      global.addEventListener.restore();
+      t.end();
+    });
+
     t.end();
   });
 
